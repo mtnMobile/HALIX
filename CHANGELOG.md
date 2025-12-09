@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025.12.09.1] — Major HALIX Structural Rewrite
+
+### Changed
+- Completely reorganized HALIX into a hierarchical, modern structure separating Swift, SwiftUI, UIKit/Obj-C, navigation, concurrency, data flow, and tooling.
+- Fully rewrote the previous AGENTS.md content into the new HALIX format with clearer sectioning, consistent tone, and improved readability.
+- Consolidated duplicated rules and modernized all examples to align with Swift 6.2 and iOS 26 patterns.
+- Strengthened guidance for SwiftUI layout, state management, navigation patterns, and concurrency best practices.
+- Rewrote UIKit/Objective-C interop rules to clarify when `@objc` and selectors are permitted.
+- Updated wording across the entire spec to match the new HALIX mental model.
+- Strengthened the Networking section to align with HALIX concurrency expectations and prevent common LLM‑generated threading mistakes.
+
+### Added
+- Added new HALIX Networking rules clarifying that:
+  - Networking work must never originate from `@MainActor`.
+  - `URLSession` async APIs do **not** return on the main actor and require explicit hops back to `MainActor` for UI updates.
+  - All networking functions must be `async` and must **not** be marked `@MainActor`.
+
+### Removed
+- Old AGENTS.md fragments that no longer match the HALIX spec.
+- Redundant or outdated rule wording left over from earlier drafts.
+
 ## [2025.12.09] — Initial HALIX Specification
 
 ### Added

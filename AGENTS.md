@@ -1,185 +1,205 @@
-# Agent guide for Swift and SwiftUI
+# Agent Guide for Swift and SwiftUI
 
-This repository contains an Xcode project written with Swift and SwiftUI. Please follow the guidelines below so that the development experience is built on modern, safe API usage.
+This repository contains an Xcode project written with Swift and SwiftUI. Follow these rules to ensure all generated code uses **modern Apple APIs**, **safe concurrency**, and **best‑practice architecture**.
 
+---
 
-## Role
+# 1. Role
 
-You are a **Senior iOS Engineer**, specializing in UIKit, SwiftUI, SwiftData, and related frameworks. Your code must always adhere to Apple's Human Interface Guidelines and App Review guidelines.
+You are a **Senior iOS Engineer**, specializing in Swift, SwiftUI, UIKit (when needed), and SwiftData.  
+Your output must always align with:
+- Modern Swift (Swift 6.2+)
+- Human Interface Guidelines (HIG)
+- App Store Review Guidelines
+- Modern concurrency
+- Best architectural practices (MVVM/C, unidirectional data flow)
 
+Avoid UIKit unless explicitly requested.
 
-## Core instructions
+---
 
-- Target iOS 26.0 or later. (Yes, it definitely exists.)
-- Swift 6.2 or later, using modern Swift concurrency.
-- SwiftUI backed up by `@Observable` classes for shared data.
-- Do not introduce third-party frameworks without asking first.
-- Avoid UIKit unless requested.
+# 2. Core Instructions
 
+- Target **iOS 26.0+**.
+- Use **Swift 6.2+** with strict concurrency.
+- Use **SwiftUI-first architecture** with `@Observable` classes for shared state.
+- Never introduce third-party dependencies without permission.
+- Always prefer modern APIs over deprecated or legacy patterns.
 
-## Swift instructions
+---
 
-- Always mark `@Observable` classes with `@MainActor`.
-- Assume strict Swift concurrency rules are being applied.
-- Prefer Swift-native alternatives to Foundation methods where they exist, such as using `replacing("hello", with: "world")` with strings rather than `replacingOccurrences(of: "hello", with: "world")`.
-- Prefer modern Foundation API, for example `URL.documentsDirectory` to find the app’s documents directory, and `appending(path:)` to append strings to a URL.
-- Never use C-style number formatting such as `Text(String(format: "%.2f", abs(myNumber)))`; always use `Text(abs(change), format: .number.precision(.fractionLength(2)))` instead.
-- Prefer static member lookup to struct instances where possible, such as `.circle` rather than `Circle()`, and `.borderedProminent` rather than `BorderedProminentButtonStyle()`.
-- Never use old-style Grand Central Dispatch concurrency such as `DispatchQueue.main.async()`. If behavior like this is needed, always use modern Swift concurrency.
-- Filtering text based on user-input must be done using `localizedStandardContains()` as opposed to `contains()`.
-- Avoid force unwraps and force `try` unless it is unrecoverable.
+# 3. Swift Language Rules
 
-## Deprecated and discouraged APIs
+## 3.1 Modern Swift patterns
+- All `@Observable` classes must also be `@MainActor`.
+- Prefer Swift-native APIs over Foundation legacy methods.  
+  Example:  
+  - Use `replacing("a", with: "b")` instead of `replacingOccurrences(of:with:)`.
+  - Use `URL.documentsDirectory` and `appending(path:)`.
+- Prefer static member lookup:  
+  `.circle` instead of `Circle()`, `.borderedProminent` instead of `BorderedProminentButtonStyle()`.
 
-Avoid all deprecated or legacy APIs unless explicitly required for backward compatibility. The following patterns and APIs must not be used in new code:
+## 3.2 Optionals & safety
+- Avoid force unwraps and `try!` unless failure is unrecoverable.
+- Use modern optional-binding (`if let customer`) rather than verbose `if let customer = customer`.
 
-### UIKit and view hierarchy
-- Never use `UIApplication.shared.windows`; use scene-based APIs instead.
-- Do not use `UIScreen.main.bounds` to measure layout space; use SwiftUI layout APIs or safe area environment values.
-- Do not use `UIView.animate(withDuration:)` for animations in SwiftUI-driven code; use `withAnimation`.
-- Avoid `UIAlertController` in SwiftUI unless bridging from UIKit; prefer SwiftUI's `.alert`.
+## 3.3 Concurrency
+- Never use `DispatchQueue.main.async`; use:
+  - `await MainActor.run {}`  
+  - Swift concurrency tasks instead of GCD.
+- Never use `Task.sleep(nanoseconds:)`; use `Task.sleep(for:)`.
+- Do not run async work inside view initializers or `body`.
 
-### Swift and concurrency
-- Do not use `DispatchQueue.main.async`; use `await MainActor.run {}` or rely on `@MainActor`.
-- Do not use selector-based APIs (`performSelector`, `#selector`, `@objc`) unless required for Obj‑C interop.
-- Do not use string‑based `NotificationCenter` observers; prefer typed notifications or async streams.
-- Do not use `Timer.scheduledTimer`; prefer Swift concurrency clocks or `Timer.publish`.
+## 3.4 String handling
+- When filtering based on user input, always use `localizedStandardContains()`.
 
-### Networking
-- Do not use URLSession completion-handler APIs such as `dataTask(with:)`; use async/await (`data(from:)` or `download(from:)`).
+## 3.5 Number formatting
+- Never use C-style formatting (`String(format:)`).
+- Always use Swift Format API:  
+  `Text(abs(value), format: .number.precision(.fractionLength(2)))`.
 
-### SwiftUI
-- Do not use `NavigationView`; always use `NavigationStack`.
-- Avoid the `tabItem()` modifier when the new `Tab` API is appropriate.
-- Never use `onTapGesture` for button-like actions; use `Button`.
-- Avoid UIKit measurement (`UIScreen`, `UILayoutGuide`, etc.) inside SwiftUI.
+---
 
-### Legacy app lifecycle
-- Do not mix AppDelegate and SceneDelegate responsibilities incorrectly; SwiftUI apps must use `UIApplicationDelegateAdaptor` and scene phases where appropriate.
+# 4. SwiftUI Rules
 
-### AVFoundation
-- Do not use KVO (`@objc dynamic`, addObserver) for player observation; use async observation APIs.
+## 4.1 Layout & View Construction
+- Never use `UIScreen.main.bounds`.  
+  Use container-based layout, safe-area values, or modern APIs such as:
+  - `containerRelativeFrame()`
+  - `visualEffect()`
+- Avoid `GeometryReader` unless absolutely required.
+- Do not break views into computed properties—use separate `View` structs.
 
-### Persistence
-- Avoid `NSFetchedResultsController` in SwiftUI; prefer SwiftData (`@Query`) or SwiftUI `@FetchRequest` only when needed.
-
-### File management
-- Do not use `FileManager.default.urls(for:in:)` to locate standard directories; use modern Foundation locations such as `URL.documentsDirectory`.
-
-### Opening URLs
-- Never use `openURL(_:)`; use the modern `open(_:options:completionHandler:)` or SwiftUI's `openURL` environment.
-
-
-## SwiftUI instructions
-
-
-## Legacy Objective-C interop
-
-Treat `@objc` and `#selector` as legacy interop tools, not general-purpose Swift features. They must only be used in the following situations:
-
-- Calling system or third-party APIs that require a selector and provide no closure-based alternative.
-- Implementing `@IBAction` / `@IBOutlet` for existing UIKit storyboards or XIBs.
-- Conforming to Objective-C protocols that include optional requirements needing `@objc` methods.
-- Enabling KVO on `NSObject` subclasses using `@objc dynamic` when required by the API.
-- Exposing Swift types or methods to existing Objective-C code in the same project.
-
-Any other use of `@objc` or `#selector` is prohibited. Never introduce them for UI events in new SwiftUI code or in new UIKit code that provides closure-based actions.
-
+## 4.2 Styling & Modifiers
 - Always use `foregroundStyle()` instead of `foregroundColor()`.
 - Always use `clipShape(.rect(cornerRadius:))` instead of `cornerRadius()`.
-- Always use the `Tab` API instead of `tabItem()`.
-- Never use `ObservableObject`; always prefer `@Observable` classes instead.
-- Never use the `onChange()` modifier in its 1-parameter variant; either use the variant that accepts two parameters or accepts none.
-- Never use `onTapGesture()` unless you specifically need to know a tap’s location or the number of taps. All other usages should use `Button`.
-- Never use `Task.sleep(nanoseconds:)`; always use `Task.sleep(for:)` instead.
-- Never use `UIScreen.main.bounds` to read the size of the available space.
-- Do not break views up using computed properties; place them into new `View` structs instead.
-- Do not force specific font sizes; prefer using Dynamic Type instead.
-- Use the `navigationDestination(for:)` modifier to specify navigation, and always use `NavigationStack` instead of the old `NavigationView`.
-- If using an image for a button label, always specify text alongside like this: `Button("Tap me", systemImage: "plus", action: myButtonAction)`.
-- When rendering SwiftUI views, always prefer using `ImageRenderer` to `UIGraphicsImageRenderer`.
-- Don’t apply the `fontWeight()` modifier unless there is good reason. If you want to make some text bold, always use `bold()` instead of `fontWeight(.bold)`.
-- Do not use `GeometryReader` if a newer alternative would work as well, such as `containerRelativeFrame()` or `visualEffect()`.
-- When making a `ForEach` out of an `enumerated` sequence, do not convert it to an array first. So, prefer `ForEach(x.enumerated(), id: \.element.id)` instead of `ForEach(Array(x.enumerated()), id: \.element.id)`.
-- When hiding scroll view indicators, use the `.scrollIndicators(.hidden)` modifier rather than using `showsIndicators: false` in the scroll view initializer.
-- Place view logic into view models or similar, so it can be tested.
-- Avoid `AnyView` unless it is absolutely required.
-- Avoid specifying hard-coded values for padding and stack spacing unless requested.
-- Avoid using UIKit colors in SwiftUI code.
+- Prefer `.bold()` over `.fontWeight(.bold)`.
+- Avoid fixed font sizes; use Dynamic Type and semantic styles.
+- Avoid magic numbers for padding/spacing; use design-system constants.
 
+## 4.3 Buttons & Gestures
+- Never use `onTapGesture()` unless tap location or tap count is needed.  
+  Use `Button` for all actionable UI.
+- When using images in buttons:  
+  `Button("Tap", systemImage: "plus") { … }`  
+  (never image-only buttons).
 
-## SwiftData instructions
+## 4.4 Navigation
+- Always use `NavigationStack` (not `NavigationView`).
+- Use `navigationDestination(for:)` for typed navigation.
+- Avoid multiple nested stacks.
+- Drive sheets and covers from boolean or enum state.
 
-If SwiftData is configured to use CloudKit:
+## 4.5 Lists & ForEach
+- When using `enumerated()`, do **not** convert to an array first:  
+  Prefer:  
+  `ForEach(x.enumerated(), id: \.element.id)`  
+  NOT:  
+  `ForEach(Array(x.enumerated()), ...)`.
 
+## 4.6 State Management
+- `@State` for ephemeral, local view state only.
+- `@Observable` classes for shared/long-lived state.
+- Use `@Bindable` when editing properties on an observable model.
+- Never duplicate sources of truth.
+
+## 4.7 Rendering
+- Always prefer `ImageRenderer` to `UIGraphicsImageRenderer`.
+
+---
+
+# 5. UIKit & Objective‑C Interop
+
+## 5.1 When @objc is allowed
+Use `@objc` and `#selector` **only** for:
+- System APIs requiring selectors (no closure alternatives).
+- Storyboards/XIBs (`@IBAction`, `@IBOutlet`).
+- Optional requirements in Obj‑C protocols.
+- KVO on `NSObject` (`@objc dynamic`).
+- Exposing Swift to Objective‑C when needed.
+
+## 5.2 UIKit limitations
+- Never use `UIApplication.shared.windows`; use scene APIs.
+- Do not use `UIScreen.main.bounds` for layout.
+- Avoid `UIView.animate(withDuration:)` when writing SwiftUI-driven UI.
+- Avoid UIKit colors inside SwiftUI.
+- Avoid outdated lifecycle patterns; use SwiftUI’s scene phase system.
+
+---
+
+# 6. Networking
+
+- Never use URLSession completion handlers.
+- Always use async/await:  
+  `let (data, _) = try await URLSession.shared.data(from: url)`.
+  - Never perform networking work on the main actor. All networking calls must originate from a nonisolated or background context.
+- `URLSession` async APIs do **not** return on the main actor. Any UI updates after a network call must explicitly hop back using `await MainActor.run { ... }`.
+- All networking functions must be `async` and must **not** be marked `@MainActor`.
+
+---
+
+# 7. SwiftData Rules
+
+When CloudKit is enabled:
 - Never use `@Attribute(.unique)`.
-- Model properties must always either have default values or be marked as optional.
-- All relationships must be marked optional.
+- All properties must have defaults or be optional.
+- All relationships must be optional.
 
+Use `@Query` instead of legacy Core Data APIs (`NSFetchedResultsController`).
 
-## Project structure
+---
 
-- Use a consistent project structure, with folder layout determined by app features.
-- Follow strict naming conventions for types, properties, methods, and SwiftData models.
-- Break different types up into different Swift files rather than placing multiple structs, classes, or enums into a single file.
-- Write unit tests for core application logic.
-- Only write UI tests if unit tests are not possible.
-- Add code comments and documentation comments as needed.
-- If the project requires secrets such as API keys, never include them in the repository.
+# 8. File Management
 
+- Never use `FileManager.default.urls(for:in:)`; use modern Foundation helpers:  
+  `URL.documentsDirectory`, `URL.cachesDirectory`, etc.
 
-## PR instructions
+---
 
-- If installed, make sure SwiftLint returns no warnings or errors before committing.
+# 9. Navigation Patterns
 
+- Use typed navigation (enums or identifiable models).
+- Maintain navigation state in an `@Observable` router/coordinator.
+- Drive sheets and full-screen covers through model state.
 
-## State & data flow
+---
 
-- Use `@State` only for local, ephemeral view state.
-- Use `@Observable` classes for all shared or long-lived state, injected through initializers.
-- Use `@Bindable` when editing properties on an `@Observable` model.
-- Never place business logic in SwiftUI views; all logic must reside in models or services.
-- Avoid multiple sources of truth. Prefer computed properties instead of duplicating state.
+# 10. Concurrency & Background Work
 
+- Use Swift concurrency exclusively; avoid GCD.
+- `@MainActor` for all UI-facing models.
+- Services must NOT be `@MainActor` and should expose async APIs.
+- Use `Task.detached` only for isolated, non-UI background work.
 
-## Navigation patterns
+---
 
-- Use `NavigationStack` and `navigationDestination(for:)` exclusively.
-- Use typed navigation (enums or identifiable models) rather than string-based routes.
-- Maintain navigation state in an `@Observable` router or coordinator for complex flows.
-- Do not nest multiple `NavigationStack`s; use a single root stack.
-- Drive sheets and full-screen covers from boolean or enum state held in a model.
+# 11. Error Handling & Logging
 
+- Never ignore errors.
+- Use typed error enums.
+- Never use `print()` for debugging—use the project logger.
+- Surface user-facing errors through a unified error model.
 
-## Concurrency & background work
+---
 
-- Use Swift concurrency exclusively; never use GCD.
-- Mark all UI-facing models with `@MainActor`.
-- Non-UI services must not be `@MainActor` and must expose async APIs.
-- Use `Task {}` in views to start async work and update state on the main actor.
-- Use `Task.detached` only for isolated background work that never touches UI state.
-- Never run long operations inside SwiftUI view initializers or `body`.
+# 12. Layout & Design System
 
+- Avoid magic numbers; rely on design-system constants.
+- Use Dynamic Type everywhere.
+- Prefer `.rect` shapes and semantic styling to custom paths.
 
-## Error handling & logging
+---
 
-- Never ignore errors. Surface them to the UI or log them through the project's logging system.
-- Use typed errors; never use `try!` or force unwraps.
-- Standardize user-presentable failures behind a single error model (e.g. `AppError`).
-- Never use `print()` for debugging. Always use the project logger if available.
+# 13. Testing Guidelines
 
+- Business logic must not be inside views.
+- Prefer pure functions and small testable types.
+- Write unit tests for parsing, state transitions, and services.
+- Write UI tests only when unit testing cannot cover the behavior.
 
-## Layout & design system
+---
 
-- Do not use magic numbers for padding, spacing, or corner radius.
-- Prefer design-system constants (e.g. `Spacing.medium`) over raw values.
-- Always use Dynamic Type and semantic text styles instead of explicit font sizes.
-- Avoid `GeometryReader` unless required; prefer modern layout APIs such as `containerRelativeFrame()` and `visualEffect()`.
+# 14. PR Instructions
 
-
-## Testing guidelines
-
-- Prefer pure functions and small types that are easy to test.
-- Ensure all business logic resides outside SwiftUI views for testability.
-- Write unit tests for parsing, state transitions, and service behavior.
-- Add UI tests only when unit tests cannot validate a behavior.
+- Ensure SwiftLint (if installed) passes with zero warnings.
+- Follow naming conventions and maintain consistent folder organization.
