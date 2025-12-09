@@ -6,6 +6,10 @@ This is my personal fork of the original
 
 Paul’s work provided the foundation and direction for this version, and I’m grateful for his original design and ideas. This fork explores some alternative patterns, refinements, and additions that reflect my own preferences and experimentation.
 
-I would also like to add a tool I've used a lot that is a huge asset when you're working with new Apple API that no LLM has been trained on.  This proved invaluable for me when working with Liquid Glass changes in a legacy code base.  
+### Helpful Tooling for New Apple APIs
 
-https://llm.codes
+When working with bleeding-edge Apple frameworks that LLMs haven’t been trained on yet (such as Liquid Glass), one tool has been especially valuable: **[llm.codes](https://llm.codes)**. It generates clean, LLM-ready text files directly from Apple’s official documentation, allowing agents to work with up-to-date APIs that aren’t yet part of any model’s training data.
+
+This service is generously offered and funded by **Peter Steinberger ([@steipete](https://twitter.com/steipete))**, a long-time and well-respected contributor in the Apple developer community. His work enables developers to stay productive on emerging APIs, and including his tools here is a small way to acknowledge that generosity.
+
+You can find more of his writing, insights, and tools on his blog: **https://steipete.me/**
