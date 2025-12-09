@@ -132,7 +132,7 @@ Use `@objc` and `#selector` **only** for:
 - Never use URLSession completion handlers.
 - Always use async/await:  
   `let (data, _) = try await URLSession.shared.data(from: url)`.
-  - Never perform networking work on the main actor. All networking calls must originate from a nonisolated or background context.
+- Never perform networking work on the main actor. All networking calls must originate from a nonisolated or background context.
 - `URLSession` async APIs do **not** return on the main actor. Any UI updates after a network call must explicitly hop back using `await MainActor.run { ... }`.
 - All networking functions must be `async` and must **not** be marked `@MainActor`.
 
